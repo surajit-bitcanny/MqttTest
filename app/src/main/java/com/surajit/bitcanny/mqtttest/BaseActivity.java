@@ -63,4 +63,9 @@ public abstract class BaseActivity extends AppCompatActivity {
             super.onBackPressed();
         }
     }
+
+    public void setActionBarTitle(String title){
+
+        getSupportActionBar().setTitle(title);
+    }
 }
