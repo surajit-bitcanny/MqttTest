@@ -47,19 +47,26 @@ public class ConnectionModel {
     private boolean lwtRetain =  false;
 
     public ConnectionModel(){
+        this("AndroidExampleClient","iot.eclipse.org",1883);
+    }
 
+    public ConnectionModel(String clientId, String host, int port){
+        this.clientId = clientId;
+        this.serverHostName = host;
+        this.serverPort = port;
+        setClientHandle(populateClientHandle());
     }
 
     static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    public static String populateClientHandle(ConnectionModel formModel){
+    private String populateClientHandle(){
         Random random = new Random();
         int length = 8;
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++){
             sb.append(AB.charAt(random.nextInt(AB.length())));
         }
-        String clientHandle = sb.toString() + '-' + formModel.getServerHostName() + '-' + formModel.getClientId();
+        String clientHandle = sb.toString() + '-' + getServerHostName() + '-' + getClientId();
         return clientHandle;
     }
 

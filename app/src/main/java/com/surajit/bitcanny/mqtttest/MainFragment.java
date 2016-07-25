@@ -57,7 +57,6 @@ public class MainFragment extends BaseFragment {
 
         connections = Connections.getInstance(getActivity());
         ConnectionModel connectionModel = new ConnectionModel();
-        connectionModel.setClientHandle(ConnectionModel.populateClientHandle(connectionModel));
         //Connection connection = Connection.createConnection()
 
 

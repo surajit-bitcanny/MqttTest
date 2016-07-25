@@ -32,7 +32,6 @@ public class MqttCallbackHandler implements MqttCallback {
   private String clientHandle;
 
   private static final String TAG = "MqttCallbackHandler";
-    private static final String activityClass = "org.eclipse.paho.android.sample.activity.MainActivity";
 
   /**
    * Creates an <code>MqttCallbackHandler</code> object
@@ -55,17 +54,6 @@ public class MqttCallbackHandler implements MqttCallback {
       Connection c = Connections.getInstance(context).getConnection(clientHandle);
       c.addAction("Connection Lost");
       c.changeConnectionStatus(Connection.ConnectionStatus.DISCONNECTED);
-
-      //String message = context.getString(R.string.connection_lost, c.getId(), c.getHostName());
-      String message = "Connection Lost";
-
-      //build intent
-      Intent intent = new Intent();
-      intent.setClassName(context, activityClass);
-      intent.putExtra("handle", clientHandle);
-
-      //notify the user
-      Notify.notifcation(context, message, intent, "Connection Lost");
     }
   }
 

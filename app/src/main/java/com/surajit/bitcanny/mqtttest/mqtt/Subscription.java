@@ -19,6 +19,14 @@ public class Subscription {
         this.enableNotifications = enableNotifications;
     }
 
+    public Subscription(String topic, int qos, String clientHandle){
+        this(topic,qos,clientHandle,true);
+    }
+
+    public Subscription(String topic,String clientHandle){
+        this(topic,1,clientHandle,true);
+    }
+
     public String getTopic() {
         return topic;
     }

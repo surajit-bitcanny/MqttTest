@@ -20,13 +20,12 @@ import java.util.ArrayList;
 public class ActionListener implements IMqttActionListener {
 
     private static final String TAG = "ActionListener";
-    private static final String activityClass = "org.eclipse.paho.android.sample.activity.MainActivity";
 
     /**
      * Actions that can be performed Asynchronously <strong>and</strong> associated with a
      * {@link ActionListener} object
      */
-    enum Action {
+    public enum Action {
         /**
          * Connect Action
          **/
@@ -116,7 +115,7 @@ public class ActionListener implements IMqttActionListener {
         Connection c = Connections.getInstance(context).getConnection(clientHandle);
         String actionTaken = "published";
         c.addAction(actionTaken);
-        Notify.toast(context, actionTaken, Toast.LENGTH_SHORT);
+        //Notify.toast(context, actionTaken, Toast.LENGTH_SHORT);
         System.out.print("Published");
 
     }
@@ -130,7 +129,7 @@ public class ActionListener implements IMqttActionListener {
         Connection c = Connections.getInstance(context).getConnection(clientHandle);
         String actionTaken = "New subscription is added";
         c.addAction(actionTaken);
-        Notify.toast(context, actionTaken, Toast.LENGTH_SHORT);
+        //Notify.toast(context, actionTaken, Toast.LENGTH_SHORT);
         System.out.print(actionTaken);
 
     }
@@ -146,11 +145,6 @@ public class ActionListener implements IMqttActionListener {
         String actionTaken = "disconnected";
         c.addAction(actionTaken);
         Log.i(TAG, c.handle() + " disconnected.");
-        //build intent
-        Intent intent = new Intent();
-        intent.setClassName(context, activityClass);
-        intent.putExtra("handle", clientHandle);
-
     }
 
     /**
@@ -211,7 +205,7 @@ public class ActionListener implements IMqttActionListener {
         Connection c = Connections.getInstance(context).getConnection(clientHandle);
         String action = "Publish error:"+exception.getMessage();
         c.addAction(action);
-        Notify.toast(context, action, Toast.LENGTH_SHORT);
+        //Notify.toast(context, action, Toast.LENGTH_SHORT);
         System.out.print("Publish failed");
 
     }
@@ -225,7 +219,7 @@ public class ActionListener implements IMqttActionListener {
         Connection c = Connections.getInstance(context).getConnection(clientHandle);
         String action = "Subscription error :"+exception.getMessage();
         c.addAction(action);
-        Notify.toast(context, action, Toast.LENGTH_SHORT);
+        //Notify.toast(context, action, Toast.LENGTH_SHORT);
         System.out.print(action);
 
     }
