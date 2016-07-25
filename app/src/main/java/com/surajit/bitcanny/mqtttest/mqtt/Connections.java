@@ -86,15 +86,20 @@ public class Connections {
      * @param connection {@link Connection} to add
      */
     public void addConnection(Connection connection){
-        connections.put(connection.handle(), connection);
-        try{
-            persistence.persistConnection(connection);
-        } catch (PersistenceException e){
-            // @todo Handle this error more appropriately
-            //error persisting well lets just swallow this
-            e.printStackTrace();
-        }
+        addConnection(connection,true);
+    }
 
+    public void addConnection(Connection connection,boolean persistantFlag){
+        connections.put(connection.handle(), connection);
+        if(persistantFlag) {
+            try {
+                persistence.persistConnection(connection);
+            } catch (PersistenceException e) {
+                // @todo Handle this error more appropriately
+                //error persisting well lets just swallow this
+                e.printStackTrace();
+            }
+        }
     }
 
     /**

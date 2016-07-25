@@ -1,17 +1,7 @@
-package com.surajit.bitcanny.mqtttest;
+package com.surajit.bitcanny.mqtttest.mqtt;
 
-import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.content.Context;
 import android.util.Log;
-
-import com.surajit.bitcanny.mqtttest.mqtt.ActionListener;
-import com.surajit.bitcanny.mqtttest.mqtt.ActivityConstants;
-import com.surajit.bitcanny.mqtttest.mqtt.Connection;
-import com.surajit.bitcanny.mqtttest.mqtt.ConnectionModel;
-import com.surajit.bitcanny.mqtttest.mqtt.Connections;
-import com.surajit.bitcanny.mqtttest.mqtt.MqttCallbackHandler;
-import com.surajit.bitcanny.mqtttest.mqtt.MqttTraceCallback;
-
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
@@ -24,19 +14,19 @@ import java.util.Map;
 /**
  * Created by surajit on 24/7/16.
  */
-public abstract class MqttActivity extends BaseActivity {
+public abstract class MqttUtility{
     /**
      * This class ensures that the user interface is updated as the Connection objects change their states
      *
      *
      */
-    private String TAG = "MqttActivity";
-    private ChangeListener changeListener = new ChangeListener();
+    private static String TAG = "MqttUtility";
+    //private ChangeListener changeListener = new ChangeListener();
 
-    private ArrayList<String> populateConnectionList(){
+    public static ArrayList<String> populateConnectionList(Context context){
 
         // get all the available connections
-        Map<String, Connection> connections = Connections.getInstance(this)
+        Map<String, Connection> connections = Connections.getInstance(context)
                 .getConnections();
         ArrayList<String> connectionMap = new ArrayList<String>();
 
@@ -49,8 +39,8 @@ public abstract class MqttActivity extends BaseActivity {
     }
 
 
-    public void updateAndConnect(ConnectionModel model){
-        Map<String, Connection> connections = Connections.getInstance(this)
+    public static void updateAndConnect(Context context,ConnectionModel model){
+        Map<String, Connection> connections = Connections.getInstance(context)
                 .getConnections();
 
         Log.i(TAG, "Updating connection: " + connections.keySet().toString());
@@ -63,13 +53,10 @@ public abstract class MqttActivity extends BaseActivity {
             }
             // Update the connection.
             connection.updateConnection(model.getClientId(), model.getServerHostName(), model.getServerPort(), model.isTlsConnection());
-            connection.changeConnectionStatus(Connection.ConnectionStatus.CONNECTING);
-            connection.getClient().setCallback(new MqttCallbackHandler(this, model.getClientHandle()));
-            connection.getClient().setTraceCallback(new MqttTraceCallback());
             MqttConnectOptions connOpts = optionsFromModel(model);
             connection.addConnectionOptions(connOpts);
-            Connections.getInstance(this).updateConnection(connection);
-            connection.getClient().connect(connOpts, null, newCallbackInstance(connection));
+            Connections.getInstance(context).updateConnection(connection);
+            connect(context,connection);
 
         } catch (MqttException ex){
             ex.printStackTrace();
@@ -82,30 +69,32 @@ public abstract class MqttActivity extends BaseActivity {
      * and then persist.
      * @param model
      */
-    public void persistAndConnect(ConnectionModel model){
+    public static Connection persistAndConnect(Context context,ConnectionModel model){
         Log.i(TAG, "Persisting new connection:" + model.getClientHandle());
-        Connection connection = Connection.createConnection(model.getClientHandle(),model.getClientId(),model.getServerHostName(),model.getServerPort(),this,model.isTlsConnection());
-        connection.registerChangeListener(changeListener);
-        connection.changeConnectionStatus(Connection.ConnectionStatus.CONNECTING);
-        connection.getClient().setCallback(new MqttCallbackHandler(this, model.getClientHandle()));
-        connection.getClient().setTraceCallback(new MqttTraceCallback());
+        Connection connection = Connection.createConnection(model.getClientHandle(),model.getClientId(),model.getServerHostName(),model.getServerPort(),context,model.isTlsConnection());
+        //connection.registerChangeListener(changeListener);
         MqttConnectOptions connOpts = optionsFromModel(model);
         connection.addConnectionOptions(connOpts);
-        Connections.getInstance(this).addConnection(connection);
+        Connections.getInstance(context).addConnection(connection);
         //connectionMap.add(model.getClientHandle());
+        connect(context,connection);
+        return connection;
+    }
 
-        try {
-            connection.getClient().connect(connOpts, null, newCallbackInstance(connection));
-        }
-        catch (MqttException e) {
-            Log.e(this.getClass().getCanonicalName(),
-                    "MqttException Occured", e);
-        }
-
+    public static Connection onlyConnect(Context context,ConnectionModel model){
+        Log.i(TAG, "Persisting new connection:" + model.getClientHandle());
+        Connection connection = Connection.createConnection(model.getClientHandle(),model.getClientId(),model.getServerHostName(),model.getServerPort(),context,model.isTlsConnection());
+        //connection.registerChangeListener(changeListener);
+        MqttConnectOptions connOpts = optionsFromModel(model);
+        connection.addConnectionOptions(connOpts);
+        Connections.getInstance(context).addConnection(connection,false);
+        //connectionMap.add(model.getClientHandle());
+        connect(context,connection);
+        return connection;
     }
 
 
-    private MqttConnectOptions optionsFromModel(ConnectionModel model){
+    private static MqttConnectOptions optionsFromModel(ConnectionModel model){
 
         MqttConnectOptions connOpts = new MqttConnectOptions();
         connOpts.setCleanSession(model.isCleanSession());
@@ -129,46 +118,49 @@ public abstract class MqttActivity extends BaseActivity {
     }
 
 
-    private ActionListener newCallbackInstance(Connection connection){
-        String[] actionArgs = new String[1];
-        actionArgs[0] = connection.getId();
-        ActionListener callback = new ActionListener(this,
-                ActionListener.Action.CONNECT, connection, actionArgs);
+    private static ActionListener newCallbackInstance(Context context, Connection connection,
+                                                      ActionListener.Action action){
+        ActionListener callback = new ActionListener(context, action, connection);
         return callback;
     }
 
 
-    public void connect(Connection connection) {
-        connection.getClient().setCallback(new MqttCallbackHandler(this, connection.handle()));
+    private static void connect(Context context,Connection connection) {
+        connection.getClient().setCallback(new MqttCallbackHandler(context, connection.handle()));
+        connection.getClient().setTraceCallback(new MqttTraceCallback());
+        connection.changeConnectionStatus(Connection.ConnectionStatus.CONNECTING);
         try {
-            connection.getClient().connect(connection.getConnectionOptions(), null, newCallbackInstance(connection));
+            connection.getClient().connect(connection.getConnectionOptions(),
+                    null, newCallbackInstance(context,connection, ActionListener.Action.CONNECT));
         }
         catch (MqttException e) {
-            Log.e(this.getClass().getCanonicalName(),
-                    "MqttException Occured", e);
+            Log.e(TAG, "MqttException Occured", e);
         }
     }
 
-    public void disconnect(Connection connection){
+    public static void disconnect(Context context,Connection connection){
         try {
-            connection.getClient().disconnect(null,newCallbackInstance(connection));
+            connection.getClient().disconnect(null,
+                    newCallbackInstance(context,connection, ActionListener.Action.DISCONNECT));
         } catch( MqttException ex){
             Log.e(TAG, "Exception occured during disconnect: " + ex.getMessage());
         }
     }
 
-    public void publish(Connection connection, String topic, String message, int qos, boolean retain){
+    public static void publish(Context context,Connection connection, String topic, String message, int qos, boolean retain){
         try {
-            connection.getClient().publish(topic, message.getBytes(), qos, retain, null, newCallbackInstance(connection));
+            connection.getClient().publish(topic, message.getBytes(), qos, retain, null,
+                    newCallbackInstance(context,connection, ActionListener.Action.PUBLISH));
         } catch( MqttException ex){
             Log.e(TAG, "Exception occured during publish: " + ex.getMessage());
         }
     }
 
-    public void subscribe(Connection connection, String topic, int qos){
+    public static void subscribe(Context context,Connection connection, String topic, int qos){
 
         try {
-            connection.getClient().subscribe(topic, qos,null,newCallbackInstance(connection));
+            connection.getClient().subscribe(topic, qos,null,
+                    newCallbackInstance(context,connection, ActionListener.Action.SUBSCRIBE));
         } catch( MqttException ex){
             Log.e(TAG, "Exception occured during subscribe: " + ex.getMessage());
         }

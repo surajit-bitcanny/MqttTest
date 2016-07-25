@@ -50,6 +50,10 @@ public class ConnectionModel {
         this("AndroidExampleClient","iot.eclipse.org",1883);
     }
 
+    public ConnectionModel(String clientId){
+        this(clientId,"iot.eclipse.org",1883);
+    }
+
     public ConnectionModel(String clientId, String host, int port){
         this.clientId = clientId;
         this.serverHostName = host;

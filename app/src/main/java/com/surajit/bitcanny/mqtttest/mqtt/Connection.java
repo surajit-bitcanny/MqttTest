@@ -74,6 +74,8 @@ public class Connection {
     private ArrayList<ReceivedMessage> messageHistory =  new ArrayList<ReceivedMessage>();
 
     private ArrayList<IReceivedMessageListener> receivedMessageListeners = new ArrayList<IReceivedMessageListener>();
+    private ArrayList<ITopicStatusListener> topicStatusListeners = new ArrayList<>();
+    private ArrayList<IConnectionStatusListener> connectionStatusListeners = new ArrayList<>();
 
     /**
      * Connections status for  a connection
@@ -420,10 +422,8 @@ public class Connection {
     public void addNewSubscription(Subscription subscription) throws MqttException {
         if(!subscriptions.containsKey(subscription.getTopic())){
             try{
-                String[] actionArgs = new String[1];
-                actionArgs[0] = subscription.getTopic();
                 final ActionListener callback = new ActionListener(this.context,
-                        ActionListener.Action.SUBSCRIBE, this, actionArgs);
+                        ActionListener.Action.SUBSCRIBE, this);
                 this.getClient().subscribe(subscription.getTopic(), subscription.getQos(), null, callback);
                 Persistence persistence = new Persistence(context);
 
@@ -462,6 +462,46 @@ public class Connection {
 
     public void addReceivedMessageListner(IReceivedMessageListener listener){
         receivedMessageListeners.add(listener);
+    }
+
+    public void addTopicStatusListener(ITopicStatusListener listener){
+        topicStatusListeners.add(listener);
+    }
+
+    public void removeTopicStatusListener(ITopicStatusListener listener){
+        topicStatusListeners.remove(listener);
+    }
+
+    public void addConnectionStatusListener(IConnectionStatusListener listener){
+        connectionStatusListeners.add(listener);
+    }
+
+    public void removeConnectionStatusListener(IConnectionStatusListener listener){
+        connectionStatusListeners.remove(listener);
+    }
+
+    public void connectionEstablished(){
+        for(IConnectionStatusListener listener:connectionStatusListeners){
+            listener.onConnected();
+        }
+    }
+
+    public void connectionFailed(){
+        for(IConnectionStatusListener listener:connectionStatusListeners){
+            listener.onDisconnected();
+        }
+    }
+
+    public void topicSubscribed(String topic, boolean status){
+        for(ITopicStatusListener listener: topicStatusListeners){
+            listener.onTopicSubscribed(topic,status);
+        }
+    }
+
+    public void topicPublished(String topic, boolean status){
+        for(ITopicStatusListener listener: topicStatusListeners){
+            listener.onTopicPublished(topic,status);
+        }
     }
 
     public void messageArrived(String topic, MqttMessage message){

@@ -3,14 +3,19 @@ package com.surajit.bitcanny.mqtttest;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.Annotation;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.surajit.bitcanny.mqtttest.mqtt.Connection;
 import com.surajit.bitcanny.mqtttest.mqtt.ConnectionModel;
 import com.surajit.bitcanny.mqtttest.mqtt.Connections;
+import com.surajit.bitcanny.mqtttest.mqtt.IReceivedMessageListener;
+import com.surajit.bitcanny.mqtttest.mqtt.MqttUtility;
+import com.surajit.bitcanny.mqtttest.mqtt.ReceivedMessage;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -21,6 +26,8 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -31,6 +38,7 @@ public class MainFragment extends BaseFragment {
 
     private String TAG = this.getClass().getName();
     private Connections connections;
+    private ArrayList<String> connectionMap;
 
     public MainFragment() {
         // Required empty public constructor
@@ -55,11 +63,20 @@ public class MainFragment extends BaseFragment {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         //MqttMessage
 
-        connections = Connections.getInstance(getActivity());
-        ConnectionModel connectionModel = new ConnectionModel();
-        //Connection connection = Connection.createConnection()
-
-
+        Connections connections = Connections.getInstance(getActivity());
+        connectionMap = MqttUtility.populateConnectionList(getActivity());
+        Log.d(TAG,"Connection map length :"+connectionMap.size());
+        ConnectionModel connectionModel = new ConnectionModel("MyMqttClient");
+        MqttUtility.onlyConnect(getActivity(),connectionModel);
+        String clientHandle = connectionModel.getClientHandle();
+        Connection connection = connections.getConnection(clientHandle);
+        connection.addReceivedMessageListner(new IReceivedMessageListener() {
+            @Override
+            public void onMessageReceived(ReceivedMessage message) {
+                Toast.makeText(getActivity(),message.toString(),Toast.LENGTH_LONG).show();
+            }
+        });
+        //MqttUtility.subscribe(getActivity(),connection,"/test11",1);
 
         return view;
     }
